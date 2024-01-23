@@ -3,6 +3,7 @@ package Node
 import (
 	"image"
 	"io"
+	"sync"
 )
 
 type Node struct {
@@ -20,6 +21,25 @@ func NewNode(x, y int, color *Color) *Node {
 	}
 }
 
+func loopOverImages(img image.Image, width, start, end int, nodes *[][]*Node) {
+
+	for y := start; y < end; y++ {
+		var row = make([]*Node, width)
+		for x := 0; x < width; x++ {
+
+			// Extrait les valeurs RGB du pixel
+			r, g, b, _ := img.At(x, y).RGBA()
+
+			node := NewNode(x, y, NewColor(r, g, b))
+
+			row[x] = node
+
+		}
+		(*nodes)[y] = row
+	}
+
+}
+
 // GetNodes Extrait les pixels d'une image en un tableau 2D de Node
 //
 // La fonction décode l'image, obtient les limites,
@@ -35,25 +55,29 @@ func GetNodes(file io.Reader) ([][]*Node, error) {
 	bounds := img.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y
 
-	//TODO Plus tard j'ajouterais des go routines, pour l'optimisation
-
-	// Transforme l'image en tableau 2D de Node
 	var nodes = make([][]*Node, height)
 
-	for y := 0; y < height; y++ {
-		var row = make([]*Node, width)
-		for x := 0; x < width; x++ {
+	//Without go routines
+	if width <= 16 && height <= 16 {
+		loopOverImages(img, width, 0, height, &nodes)
 
-			// Extrait les valeurs RGB du pixel
-			r, g, b, _ := img.At(x, y).RGBA()
-
-			node := NewNode(x, y, NewColor(r, g, b))
-
-			row[x] = node
-
-		}
-		nodes[y] = row
+		return nodes, nil
 	}
+
+	//With go routines
+	//TODO : Trouver un moyen de ne pas hardcoder le nombre de go routines, plutôt proportionnel à la taille de l'image
+	chunck := height / 10
+	wg := sync.WaitGroup{}
+	wg.Add(chunck)
+
+	for i := 0; i < chunck; i++ {
+		go func(img image.Image, width, start, end int, nodes *[][]*Node) {
+			defer wg.Done()
+			loopOverImages(img, width, start, end, nodes)
+		}(img, width, i*10, (i+1)*10-1, &nodes)
+	}
+
+	wg.Wait()
 
 	return nodes, nil
 }

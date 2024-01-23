@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/P0SLX/go-star/Node"
 	"image"
@@ -9,11 +10,17 @@ import (
 )
 
 func main() {
-	defer Timer("main")()
-	image.RegisterFormat("png", "png", png.Decode, png.DecodeConfig)
-	file, fileErr := os.Open("./first_level.png")
 
-	if fileErr != nil {
+	var imgPath string
+
+	flag.StringVar(&imgPath, "img", "./ressources/first_level.png", "Select path to image")
+	flag.Parse()
+
+	//defer Timer("main")()
+	image.RegisterFormat("png", "png", png.Decode, png.DecodeConfig)
+	file, err := os.Open(imgPath)
+
+	if err != nil {
 		fmt.Println("Image introuvable...")
 		os.Exit(1)
 	}
@@ -27,14 +34,14 @@ func main() {
 		}
 	}(file)
 
-	nodes, nodesErr := Node.GetNodes(file)
+	nodes, err := Node.GetNodes(file)
 
-	if nodesErr != nil {
+	if err != nil {
 		fmt.Println("Impossible de décoder l'image")
 		os.Exit(1)
 	}
 
 	start, end := Node.GetStartAndEnd(nodes)
 
-	fmt.Println(start, end)
+	fmt.Printf("Start %#v, End %#v\n", start, end)
 }
