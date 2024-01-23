@@ -37,4 +37,6 @@ func main() {
 	start, end := Node.GetStartAndEnd(nodes)
 
 	fmt.Println(start, end)
+
+	Node.SaveToFile(nodes, "./output.png")
 }
