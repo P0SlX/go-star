@@ -1,8 +1,12 @@
 package Node
 
 import (
+	"fmt"
 	"image"
+	"image/color"
+	"image/png"
 	"io"
+	"os"
 	"sync"
 )
 
@@ -112,4 +116,41 @@ func GetStartAndEnd(nodes [][]*Node) (*Node, *Node) {
 	}
 
 	return nil, nil
+}
+
+func nodeToImage(nodes [][]*Node) image.Image {
+	width, height := len(nodes), len(nodes[0])
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	for i := range nodes {
+		for j := range nodes[i] {
+			img.Set(j, i, color.RGBA{
+				R: nodes[i][j].R,
+				G: nodes[i][j].G,
+				B: nodes[i][j].B,
+				A: 255,
+			})
+		}
+	}
+	return img
+}
+
+func SaveToFile(nodes [][]*Node, filename string) {
+	img := nodeToImage(nodes)
+
+	out, saveErr := os.Create(filename)
+	if saveErr != nil {
+		fmt.Println("Impossible de créer le fichier de sortie")
+		os.Exit(1)
+	}
+	defer func(out *os.File) {
+		closeErr := out.Close()
+		if closeErr != nil {
+
+		}
+	}(out)
+
+	encodeErr := png.Encode(out, img)
+	if encodeErr != nil {
+		return
+	}
 }

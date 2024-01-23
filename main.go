@@ -44,4 +44,6 @@ func main() {
 	start, end := Node.GetStartAndEnd(nodes)
 
 	fmt.Printf("Start %#v, End %#v\n", start, end)
+
+	Node.SaveToFile(nodes, "./output.png")
 }

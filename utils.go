@@ -5,8 +5,7 @@ import (
 	"time"
 )
 
-// Timer Fonction de mesure de temps
-// Permet de mesurer le temps d'exécution d'une fonction jusqu'à son retour
+// Timer permet de mesurer le temps d'exécution d'une fonction jusqu'à son retour
 //
 // Usage : defer timer("nomDeLaFonctionAMesurer")()
 //
