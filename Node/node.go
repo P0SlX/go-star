@@ -14,14 +14,20 @@ type Node struct {
 	X int
 	Y int
 
-	*Color
+	Color *Color
+
+	G, H, F   float64
+	Neighbors []*Node
+	Parent    *Node
+	IsWall    bool
 }
 
 func NewNode(x, y int, color *Color) *Node {
 	return &Node{
-		x,
-		y,
-		color,
+		X:      x,
+		Y:      y,
+		Color:  color,
+		IsWall: color.R == 0 && color.G == 0 && color.B == 0,
 	}
 }
 
@@ -64,6 +70,7 @@ func GetNodes(file io.Reader) ([][]*Node, error) {
 	//Without go routines
 	if width <= 16 && height <= 16 {
 		loopOverImages(img, width, 0, height, &nodes)
+		applyNeighbors(nodes)
 
 		return nodes, nil
 	}
@@ -83,7 +90,34 @@ func GetNodes(file io.Reader) ([][]*Node, error) {
 
 	wg.Wait()
 
+	applyNeighbors(nodes)
 	return nodes, nil
+}
+
+func applyNeighbors(nodes [][]*Node) {
+	for i := range nodes {
+		for j := range nodes[i] {
+			// Haut
+			if i > 0 {
+				nodes[i][j].Neighbors = append(nodes[i][j].Neighbors, nodes[i-1][j])
+			}
+
+			// Bas
+			if i < len(nodes)-1 {
+				nodes[i][j].Neighbors = append(nodes[i][j].Neighbors, nodes[i+1][j])
+			}
+
+			// Gauche
+			if j > 0 {
+				nodes[i][j].Neighbors = append(nodes[i][j].Neighbors, nodes[i][j-1])
+			}
+
+			// Droite
+			if j < len(nodes[i])-1 {
+				nodes[i][j].Neighbors = append(nodes[i][j].Neighbors, nodes[i][j+1])
+			}
+		}
+	}
 }
 
 // GetStartAndEnd Détecte le point de départ et d'arrivée
@@ -104,7 +138,7 @@ func GetStartAndEnd(nodes [][]*Node) (*Node, *Node) {
 			}
 
 			// Point d'arrivée
-			if nodes[i][j].isEndPoint() {
+			if nodes[i][j].Color.isEndPoint() {
 				end = nodes[i][j]
 			}
 
@@ -118,15 +152,24 @@ func GetStartAndEnd(nodes [][]*Node) (*Node, *Node) {
 	return nil, nil
 }
 
+// ColorPath Colorie le chemin trouvé en violet
+func ColorPath(nodes []*Node) {
+	for _, node := range nodes {
+		node.Color.R = 255
+		node.Color.G = 0
+		node.Color.B = 255
+	}
+}
+
 func nodeToImage(nodes [][]*Node) image.Image {
 	width, height := len(nodes), len(nodes[0])
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for i := range nodes {
 		for j := range nodes[i] {
 			img.Set(j, i, color.RGBA{
-				R: nodes[i][j].R,
-				G: nodes[i][j].G,
-				B: nodes[i][j].B,
+				R: nodes[i][j].Color.R,
+				G: nodes[i][j].Color.G,
+				B: nodes[i][j].Color.B,
 				A: 255,
 			})
 		}

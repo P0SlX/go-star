@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/P0SLX/go-star/AStar"
 	"github.com/P0SLX/go-star/Node"
 	"image"
 	"image/png"
@@ -10,13 +11,12 @@ import (
 )
 
 func main() {
-
+	defer Timer("main")()
 	var imgPath string
 
 	flag.StringVar(&imgPath, "img", "./ressources/first_level.png", "Select path to image")
 	flag.Parse()
 
-	//defer Timer("main")()
 	image.RegisterFormat("png", "png", png.Decode, png.DecodeConfig)
 	file, err := os.Open(imgPath)
 
@@ -41,9 +41,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	start, end := Node.GetStartAndEnd(nodes)
-
-	fmt.Printf("Start %#v, End %#v\n", start, end)
-
+	path := AStar.AStar(Node.GetStartAndEnd(nodes))
+	Node.ColorPath(path)
 	Node.SaveToFile(nodes, "./output.png")
 }
