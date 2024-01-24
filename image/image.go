@@ -2,8 +2,8 @@ package image
 
 import (
 	. "github.com/P0SLX/go-star/node"
+	"github.com/P0SLX/go-star/utils"
 	"image"
-	"image/color"
 	"image/png"
 	"os"
 	"runtime"
@@ -34,7 +34,7 @@ func NewImage(path string) (*Image, error) {
 	return &Image{File: file, Image: img}, nil
 }
 
-func (i Image) readder(width, start, end int, nodes *[][]*Node) {
+func (i Image) Reader(width, start, end int, nodes *[][]*Node) {
 
 	for y := start; y < end; y++ {
 		var row = make([]*Node, width)
@@ -53,22 +53,20 @@ func (i Image) readder(width, start, end int, nodes *[][]*Node) {
 
 }
 
-func (i Image) readderOptimized(width, height int, nodes *[][]*Node) {
+func (i Image) ReaderOptimized(width, height int, nodes *[][]*Node) {
 
-	chunck := height / 10
-
-	rest := height % 10
+	chunk, rest, factor := utils.FindBestChunck(height)
 
 	maxWorkers := runtime.NumCPU()
 
 	sem := make(chan struct{}, maxWorkers)
 
-	for j := 0; j < chunck; j++ {
+	for j := 0; j < chunk; j++ {
 		sem <- struct{}{}
 		go func(width, start, end int, nodes *[][]*Node) {
 			defer func() { <-sem }()
-			i.readder(width, start, end, nodes)
-		}(width, j*10, (j+1)*10, nodes)
+			i.Reader(width, start, end, nodes)
+		}(width, j*factor, (j+1)*factor, nodes)
 	}
 
 	for j := 0; j < maxWorkers; j++ {
@@ -76,53 +74,35 @@ func (i Image) readderOptimized(width, height int, nodes *[][]*Node) {
 	}
 
 	if rest > 0 {
-		i.readder(width, chunck*10, chunck*10+rest, nodes)
+		i.Reader(width, chunk*factor, chunk*factor+rest, nodes)
 	}
 
 }
 
 func (i *Image) findNeighbors(nodes [][]*Node) {
-
 	for y := range nodes {
-		//TODO : Faire un tableau avec make
 		for x := range nodes[y] {
 			// Haut
 			if y > 0 {
-				nodes[y][x].Neighbors = append(nodes[y][x].Neighbors, nodes[y-1][x])
+				nodes[y][x].Neighbors[0] = nodes[y-1][x]
 			}
 
 			// Bas
 			if y < len(nodes)-1 {
-				nodes[y][x].Neighbors = append(nodes[y][x].Neighbors, nodes[y+1][x])
+				nodes[y][x].Neighbors[1] = nodes[y+1][x]
 			}
 
 			// Gauche
 			if x > 0 {
-				nodes[y][x].Neighbors = append(nodes[y][x].Neighbors, nodes[y][x-1])
+				nodes[y][x].Neighbors[2] = nodes[y][x-1]
 			}
 
 			// Droite
 			if x < len(nodes[y])-1 {
-				nodes[y][x].Neighbors = append(nodes[y][x].Neighbors, nodes[y][x+1])
+				nodes[y][x].Neighbors[3] = nodes[y][x+1]
 			}
 		}
 	}
-}
-
-func nodeToImage(nodes [][]*Node) image.Image {
-	width, height := len(nodes), len(nodes[0])
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	for i := range nodes {
-		for j := range nodes[i] {
-			img.Set(j, i, color.RGBA{
-				R: nodes[i][j].Color.R,
-				G: nodes[i][j].Color.G,
-				B: nodes[i][j].Color.B,
-				A: 255,
-			})
-		}
-	}
-	return img
 }
 
 // FindStartAndEndNode Détecte le point de départ et d'arrivée
@@ -172,10 +152,10 @@ func (i *Image) Read() [][]*Node {
 
 	//Without go routines
 	if width <= 16 && height <= 16 {
-		i.readder(width, 0, height, &nodes)
+		i.Reader(width, 0, height, &nodes)
 	} else {
 		//With go routines
-		i.readderOptimized(width, height, &nodes)
+		i.ReaderOptimized(width, height, &nodes)
 	}
 
 	return nodes
@@ -183,7 +163,7 @@ func (i *Image) Read() [][]*Node {
 }
 
 func (i Image) Save(nodes [][]*Node, filename string) error {
-	img := nodeToImage(nodes)
+	img := utils.NodeToImage(nodes)
 
 	out, err := os.Create("./ressources/" + filename)
 
