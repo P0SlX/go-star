@@ -1,7 +1,9 @@
 package AStar
 
 import (
+	"container/heap"
 	"github.com/P0SLX/go-star/node"
+	"github.com/P0SLX/go-star/utils"
 	"math"
 )
 
@@ -45,47 +47,57 @@ func ColorPath(nodes []*node.Node) {
 	}
 }
 
-// AStar Implémentation de l'algorithme A*
+type PriorityQueue []*node.Node
+
+func (pq PriorityQueue) Len() int { return len(pq) }
+
+func (pq PriorityQueue) Less(i, j int) bool {
+	return pq[i].F < pq[j].F
+}
+
+func (pq PriorityQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+}
+
+func (pq *PriorityQueue) Push(x interface{}) {
+	*pq = append(*pq, x.(*node.Node))
+}
+
+func (pq *PriorityQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	x := old[n-1]
+	*pq = old[0 : n-1]
+	return x
+}
+
 func AStar(start, end *node.Node) []*node.Node {
-	var openList, closedList []*node.Node
-	var currentNode *node.Node
+	defer utils.Timer("AStar")()
+	openSet := &PriorityQueue{}
+	closedSet := make(map[*node.Node]bool)
+	heap.Init(openSet)
+	heap.Push(openSet, start)
 
-	openList = append(openList, start)
-
-	for len(openList) > 0 {
-		currentNode = openList[0]
-		currentIndex := 0
-
-		for index, v := range openList {
-			if v.F < currentNode.F {
-				currentNode = v
-				currentIndex = index
-			}
-		}
-
-		openList = append(openList[:currentIndex], openList[currentIndex+1:]...)
-		closedList = append(closedList, currentNode)
+	for openSet.Len() > 0 {
+		currentNode := heap.Pop(openSet).(*node.Node)
 
 		if currentNode == end {
 			return reconstructPath(start, end)
 		}
 
+		closedSet[currentNode] = true
+
 		for _, neighbor := range currentNode.Neighbors {
-			if neighbor.IsWall || contains(closedList, neighbor) {
+			if closedSet[neighbor] || neighbor.IsWall {
 				continue
 			}
 
-			tempG := currentNode.G + 1
-
-			if !contains(openList, neighbor) || tempG < neighbor.G {
-				neighbor.G = tempG
+			if !contains(*openSet, neighbor) {
+				neighbor.G = currentNode.G + 1
 				neighbor.H = Heuristic(neighbor, end)
 				neighbor.F = neighbor.G + neighbor.H
 				neighbor.Parent = currentNode
-
-				if !contains(openList, neighbor) {
-					openList = append(openList, neighbor)
-				}
+				heap.Push(openSet, neighbor)
 			}
 		}
 	}
