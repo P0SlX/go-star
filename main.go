@@ -4,7 +4,6 @@ import (
 	"flag"
 	"github.com/P0SLX/go-star/AStar"
 	"github.com/P0SLX/go-star/image"
-	"github.com/P0SLX/go-star/utils"
 	"log"
 )
 
@@ -13,8 +12,6 @@ func main() {
 
 	flag.StringVar(&imgPath, "img", "./ressources/first_level.png", "Select path to image")
 	flag.Parse()
-
-	utils.Timer("main")()
 
 	img, err := image.NewImage(imgPath)
 
@@ -25,8 +22,6 @@ func main() {
 	nodes := img.Read()
 
 	start, end := img.FindStartAndEndNode(nodes)
-
-	log.Printf("Start %#v, End %#v\n", start, end)
 
 	path := AStar.AStar(start, end)
 	AStar.ColorPath(path)
