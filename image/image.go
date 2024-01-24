@@ -2,6 +2,7 @@ package image
 
 import (
 	. "github.com/P0SLX/go-star/node"
+	"github.com/P0SLX/go-star/utils"
 	"image"
 	"image/color"
 	"image/png"
@@ -110,7 +111,7 @@ func (i *Image) findNeighbors(nodes [][]*Node) {
 }
 
 func nodeToImage(nodes [][]*Node) image.Image {
-	width, height := len(nodes), len(nodes[0])
+	width, height := len(nodes[0]), len(nodes)
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for i := range nodes {
 		for j := range nodes[i] {
@@ -162,6 +163,7 @@ func (i Image) FindStartAndEndNode(nodes [][]*Node) (*Node, *Node) {
 // La fonction décode l'image, obtient les limites,
 // initialise un tableau 2D de Node, et boucle sur chaque pixel.
 func (i *Image) Read() [][]*Node {
+	defer utils.Timer("Read")()
 
 	// Limites de l'image
 	bounds := i.Bounds()
@@ -179,7 +181,6 @@ func (i *Image) Read() [][]*Node {
 	}
 
 	return nodes
-
 }
 
 func (i Image) Save(nodes [][]*Node, filename string) error {
