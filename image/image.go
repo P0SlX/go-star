@@ -9,12 +9,26 @@ import (
 	"runtime"
 )
 
+var (
+	MIN_SIZE = 32
+)
+
 type Image struct {
 	File *os.File
 
 	image.Image
+
+	Chunk  int
+	Rest   int
+	Factor int
+
+	Width  int
+	Height int
+
+	Nodes [][]*Node
 }
 
+// NewImage Crée une nouvelle instance de Image
 func NewImage(path string) (*Image, error) {
 	image.RegisterFormat("png", "png", png.Decode, png.DecodeConfig)
 	file, err := os.Open(path)
@@ -31,14 +45,29 @@ func NewImage(path string) (*Image, error) {
 		return nil, err
 	}
 
-	return &Image{File: file, Image: img}, nil
+	// Limites de l'image
+	bounds := img.Bounds()
+
+	chunk, rest, factor := utils.FindBestChunck(bounds.Max.Y)
+
+	return &Image{
+		File:   file,
+		Width:  bounds.Max.X,
+		Height: bounds.Max.Y,
+		Image:  img,
+		Rest:   rest,
+		Chunk:  chunk,
+		Factor: factor,
+		Nodes:  make([][]*Node, bounds.Max.Y),
+	}, nil
 }
 
-func (i Image) Reader(width, start, end int, nodes *[][]*Node) {
+// Reader Extrait les pixels d'une image en un tableau 2D de Node
+func (i Image) Reader(start, end int) {
 
 	for y := start; y < end; y++ {
-		var row = make([]*Node, width)
-		for x := 0; x < width; x++ {
+		var row = make([]*Node, i.Width)
+		for x := 0; x < i.Width; x++ {
 
 			// Extrait les valeurs RGB du pixel
 			r, g, b, _ := i.Image.At(x, y).RGBA()
@@ -48,58 +77,58 @@ func (i Image) Reader(width, start, end int, nodes *[][]*Node) {
 			row[x] = node
 
 		}
-		(*nodes)[y] = row
+		i.Nodes[y] = row
 	}
 
 }
 
-func (i Image) ReaderOptimized(width, height int, nodes *[][]*Node) {
-
-	chunk, rest, factor := utils.FindBestChunck(height)
+// ReaderOptimized Extrait les pixels d'une image en un tableau 2D de Node
+func (i Image) ReaderOptimized() {
 
 	maxWorkers := runtime.NumCPU()
 
 	sem := make(chan struct{}, maxWorkers)
 
-	for j := 0; j < chunk; j++ {
+	for j := 0; j < i.Chunk; j++ {
 		sem <- struct{}{}
-		go func(width, start, end int, nodes *[][]*Node) {
+		go func(start, end int) {
 			defer func() { <-sem }()
-			i.Reader(width, start, end, nodes)
-		}(width, j*factor, (j+1)*factor, nodes)
+			i.Reader(start, end)
+		}(j*i.Factor, (j+1)*i.Factor)
 	}
 
 	for j := 0; j < maxWorkers; j++ {
 		sem <- struct{}{}
 	}
 
-	if rest > 0 {
-		i.Reader(width, chunk*factor, chunk*factor+rest, nodes)
+	if i.Rest > 0 {
+		i.Reader(i.Chunk*i.Factor, i.Chunk*i.Factor+i.Rest)
 	}
 
 }
 
-func (i *Image) findNeighbors(nodes [][]*Node) {
-	for y := range nodes {
-		for x := range nodes[y] {
+// findNeighbors Trouve les voisins de chaque node
+func (i *Image) findNeighbors() {
+	for y := range i.Nodes {
+		for x := range i.Nodes[y] {
 			// Haut
 			if y > 0 {
-				nodes[y][x].Neighbors[0] = nodes[y-1][x]
+				i.Nodes[y][x].Neighbors[0] = i.Nodes[y-1][x]
 			}
 
 			// Bas
-			if y < len(nodes)-1 {
-				nodes[y][x].Neighbors[1] = nodes[y+1][x]
+			if y < len(i.Nodes)-1 {
+				i.Nodes[y][x].Neighbors[1] = i.Nodes[y+1][x]
 			}
 
 			// Gauche
 			if x > 0 {
-				nodes[y][x].Neighbors[2] = nodes[y][x-1]
+				i.Nodes[y][x].Neighbors[2] = i.Nodes[y][x-1]
 			}
 
 			// Droite
-			if x < len(nodes[y])-1 {
-				nodes[y][x].Neighbors[3] = nodes[y][x+1]
+			if x < len(i.Nodes[y])-1 {
+				i.Nodes[y][x].Neighbors[3] = i.Nodes[y][x+1]
 			}
 		}
 	}
@@ -111,20 +140,20 @@ func (i *Image) findNeighbors(nodes [][]*Node) {
 // Le point d'arrivée est un pixel rouge (255, 0, 0)
 // On boucle sur chaque node, et on renvoie le pointeur
 // du premier pixel vert et du premier pixel rouge
-func (i Image) FindStartAndEndNode(nodes [][]*Node) (*Node, *Node) {
+func (i Image) FindStartAndEndNode() (*Node, *Node) {
 	var start *Node
 	var end *Node
 
-	for y := range nodes {
-		for x := range nodes[y] {
+	for y := range i.Nodes {
+		for x := range i.Nodes[y] {
 			// Point de départ
-			if nodes[y][x].Color.IsStartPoint() {
-				start = nodes[y][x]
+			if i.Nodes[y][x].Color.IsStartPoint() {
+				start = i.Nodes[y][x]
 			}
 
 			// Point d'arrivée
-			if nodes[y][x].Color.IsEndPoint() {
-				end = nodes[y][x]
+			if i.Nodes[y][x].Color.IsEndPoint() {
+				end = i.Nodes[y][x]
 			}
 
 			// Tout trouvé ? Pas besoin de continuer
@@ -143,27 +172,30 @@ func (i Image) FindStartAndEndNode(nodes [][]*Node) (*Node, *Node) {
 // initialise un tableau 2D de Node, et boucle sur chaque pixel.
 func (i *Image) Read() [][]*Node {
 
-	// Limites de l'image
-	bounds := i.Bounds()
-	width, height := bounds.Max.X, bounds.Max.Y
-
-	var nodes = make([][]*Node, height)
-	defer i.findNeighbors(nodes)
+	defer i.findNeighbors()
 
 	//Without go routines
-	if width <= 16 && height <= 16 {
-		i.Reader(width, 0, height, &nodes)
+	if i.Width <= MIN_SIZE && i.Height <= MIN_SIZE {
+		i.Reader(0, i.Height)
 	} else {
 		//With go routines
-		i.ReaderOptimized(width, height, &nodes)
+		i.ReaderOptimized()
 	}
 
-	return nodes
+	return i.Nodes
 
 }
 
-func (i Image) Save(nodes [][]*Node, filename string) error {
-	img := utils.NodeToImage(nodes)
+// Save image in ressources folder
+func (i Image) Save(filename string) error {
+
+	var img image.Image
+
+	if i.Width <= MIN_SIZE && i.Height <= MIN_SIZE {
+		img = utils.NodeToImage(i.Nodes)
+	} else {
+		img = utils.NodeToImageOptimize(i.Nodes)
+	}
 
 	out, err := os.Create("./ressources/" + filename)
 

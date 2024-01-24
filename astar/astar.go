@@ -1,18 +1,10 @@
-package AStar
+package astar
 
 import (
 	"container/heap"
 	"github.com/P0SLX/go-star/node"
 	"github.com/P0SLX/go-star/utils"
-	"math"
 )
-
-// Heuristic calcule la distance Euclidienne entre 2 points
-func Heuristic(node, dest *node.Node) float64 {
-	xSquare := float64(node.X-dest.X) * float64(node.X-dest.X)
-	ySquare := float64(node.Y-dest.Y) * float64(node.Y-dest.Y)
-	return math.Sqrt(xSquare + ySquare)
-}
 
 func reconstructPath(start, end *node.Node) []*node.Node {
 	var path []*node.Node
@@ -37,32 +29,8 @@ func ColorPath(nodes []*node.Node) {
 	}
 }
 
-type PriorityQueue []*node.Node
-
-func (pq PriorityQueue) Len() int { return len(pq) }
-
-func (pq PriorityQueue) Less(i, j int) bool {
-	return pq[i].F < pq[j].F
-}
-
-func (pq PriorityQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-}
-
-func (pq *PriorityQueue) Push(x interface{}) {
-	*pq = append(*pq, x.(*node.Node))
-}
-
-func (pq *PriorityQueue) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	x := old[n-1]
-	*pq = old[0 : n-1]
-	return x
-}
-
 func AStar(start, end *node.Node) []*node.Node {
-	defer utils.Timer("AStar")()
+	defer utils.Timer("astar")()
 	openSet := &PriorityQueue{}
 	closedSet := make(map[*node.Node]bool)
 	heap.Init(openSet)
@@ -84,7 +52,7 @@ func AStar(start, end *node.Node) []*node.Node {
 
 			if !neighbor.Already {
 				neighbor.G = currentNode.G + 1
-				neighbor.H = Heuristic(neighbor, end)
+				neighbor.H = neighbor.Heuristic(end)
 				neighbor.F = neighbor.G + neighbor.H
 				neighbor.Parent = currentNode
 				neighbor.Already = true

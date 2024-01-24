@@ -21,16 +21,15 @@ func main() {
 		log.Fatalf("Error during image decoding : %s\n", err.Error())
 	}
 
-	nodes := img.Read()
+	_ = img.Read()
 
-	start, end := img.FindStartAndEndNode(nodes)
+	/*
+		start, end := img.FindStartAndEndNode()
+		path := astar.astar(start, end)
+		astar.ColorPath(path)
+	*/
 
-	log.Printf("Start %#v, End %#v\n", start, end)
-
-	/*	path := AStar.AStar(start, end)
-		AStar.ColorPath(path)*/
-
-	err = img.Save(nodes, "output.png")
+	err = img.Save("output.png")
 
 	if err != nil {
 		log.Fatalf("Error during image saving : %s\n", err.Error())

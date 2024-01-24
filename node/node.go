@@ -1,5 +1,7 @@
 package node
 
+import "math"
+
 type Node struct {
 	X int
 	Y int
@@ -22,4 +24,11 @@ func NewNode(x, y int, color *Color) *Node {
 		IsWall:    color.R == 0 && color.G == 0 && color.B == 0,
 		Neighbors: make([]*Node, 4),
 	}
+}
+
+// Heuristic calcule la distance Euclidienne entre 2 points
+func (n Node) Heuristic(dest *Node) float64 {
+	xSquare := float64(n.X-dest.X) * float64(n.X-dest.X)
+	ySquare := float64(n.Y-dest.Y) * float64(n.Y-dest.Y)
+	return math.Sqrt(xSquare + ySquare)
 }

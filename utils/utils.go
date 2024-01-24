@@ -21,24 +21,22 @@ func Timer(name string) func() {
 	}
 }
 
-func FindBestChunck(height int) (int, int, int) {
+func FindBestChunck(height int) (chunck int, rest int, resolution int) {
 	var maxCPU = runtime.NumCPU() * 10
 
 	var resolutions = []int{4, 8, 16, 32, 64, 128, 256, 512, 1_024, 2_048, 4_096, 8_192, 16_384, 32_768}
 
-	var chunck, rest int
+	for _, r := range resolutions {
+		chunck = height / r
 
-	for _, resolution := range resolutions {
-		chunck = height / resolution
-
-		rest = height % resolution
+		rest = height % r
 
 		if chunck < maxCPU {
-			return chunck, rest, resolution
+			return chunck, rest, r
 		}
 	}
 
-	return 0, 0, 0
+	return chunck, rest, resolution
 
 }
 
