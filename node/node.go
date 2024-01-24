@@ -6,10 +6,12 @@ type Node struct {
 
 	Color *Color
 
-	G, H, F   float64
+	G, H, F float64
+
 	Neighbors []*Node
 	Parent    *Node
 	IsWall    bool
+	Already   bool // Déjà visité
 }
 
 func NewNode(x, y int, color *Color) *Node {

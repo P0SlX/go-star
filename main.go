@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/P0SLX/go-star/AStar"
 	"github.com/P0SLX/go-star/image"
+	"github.com/P0SLX/go-star/utils"
 	"log"
 )
 
@@ -12,6 +13,8 @@ func main() {
 
 	flag.StringVar(&imgPath, "img", "./ressources/first_level.png", "Select path to image")
 	flag.Parse()
+
+	defer utils.Timer("Total")()
 
 	img, err := image.NewImage(imgPath)
 

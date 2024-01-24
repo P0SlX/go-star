@@ -28,16 +28,6 @@ func reconstructPath(start, end *node.Node) []*node.Node {
 	return path
 }
 
-func contains(nodes []*node.Node, node *node.Node) bool {
-	for _, n := range nodes {
-		if n == node {
-			return true
-		}
-	}
-
-	return false
-}
-
 // ColorPath Colorie le chemin trouvé en violet
 func ColorPath(nodes []*node.Node) {
 	for _, v := range nodes {
@@ -92,11 +82,12 @@ func AStar(start, end *node.Node) []*node.Node {
 				continue
 			}
 
-			if !contains(*openSet, neighbor) {
+			if !neighbor.Already {
 				neighbor.G = currentNode.G + 1
 				neighbor.H = Heuristic(neighbor, end)
 				neighbor.F = neighbor.G + neighbor.H
 				neighbor.Parent = currentNode
+				neighbor.Already = true
 				heap.Push(openSet, neighbor)
 			}
 		}
