@@ -3,6 +3,7 @@ package image
 import (
 	. "github.com/P0SLX/go-star/node"
 	"image"
+	"image/color"
 	"image/png"
 	"os"
 	"runtime"
@@ -74,7 +75,86 @@ func (i Image) readderOptimized(width, height int, nodes *[][]*Node) {
 
 }
 
-func (i *Image) Read() *[][]*Node {
+func (i *Image) findNeighbors(nodes [][]*Node) {
+	for y := range nodes {
+		//TODO : Faire un tableau avec make
+		for x := range nodes[y] {
+			// Haut
+			if y > 0 {
+				nodes[y][x].Neighbors = append(nodes[y][x].Neighbors, nodes[y-1][x])
+			}
+
+			// Bas
+			if y < len(nodes)-1 {
+				nodes[y][x].Neighbors = append(nodes[y][x].Neighbors, nodes[y+1][x])
+			}
+
+			// Gauche
+			if x > 0 {
+				nodes[y][x].Neighbors = append(nodes[y][x].Neighbors, nodes[y][x-1])
+			}
+
+			// Droite
+			if x < len(nodes[y])-1 {
+				nodes[y][x].Neighbors = append(nodes[y][x].Neighbors, nodes[y][x+1])
+			}
+		}
+	}
+}
+
+func nodeToImage(nodes [][]*Node) image.Image {
+	width, height := len(nodes), len(nodes[0])
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	for i := range nodes {
+		for j := range nodes[i] {
+			img.Set(j, i, color.RGBA{
+				R: nodes[i][j].Color.R,
+				G: nodes[i][j].Color.G,
+				B: nodes[i][j].Color.B,
+				A: 255,
+			})
+		}
+	}
+	return img
+}
+
+// FindStartAndEndNode Détecte le point de départ et d'arrivée
+//
+// Le point de départ est un pixel vert (0, 255, 0)
+// Le point d'arrivée est un pixel rouge (255, 0, 0)
+// On boucle sur chaque node, et on renvoie le pointeur
+// du premier pixel vert et du premier pixel rouge
+func (i Image) FindStartAndEndNode(nodes [][]*Node) (*Node, *Node) {
+	var start *Node
+	var end *Node
+
+	for y := range nodes {
+		for x := range nodes[y] {
+			// Point de départ
+			if nodes[y][x].Color.IsStartPoint() {
+				start = nodes[y][x]
+			}
+
+			// Point d'arrivée
+			if nodes[y][x].Color.IsEndPoint() {
+				end = nodes[y][x]
+			}
+
+			// Tout trouvé ? Pas besoin de continuer
+			if start != nil && end != nil {
+				return start, end
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+// Read Extrait les pixels d'une image en un tableau 2D de Node
+//
+// La fonction décode l'image, obtient les limites,
+// initialise un tableau 2D de Node, et boucle sur chaque pixel.
+func (i *Image) Read() [][]*Node {
 
 	// Limites de l'image
 	bounds := i.Bounds()
@@ -90,6 +170,24 @@ func (i *Image) Read() *[][]*Node {
 		i.readderOptimized(width, height, &nodes)
 	}
 
-	return &nodes
+	i.findNeighbors(nodes)
 
+	return nodes
+
+}
+
+func (i Image) Save(nodes [][]*Node, filename string) error {
+	img := nodeToImage(nodes)
+
+	out, err := os.Create("./ressources/" + filename)
+
+	if err != nil {
+		return err
+	}
+
+	defer out.Close()
+
+	err = png.Encode(out, img)
+
+	return err
 }

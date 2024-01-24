@@ -22,3 +22,5 @@ go.work
 .idea
 
 dist/application
+
+ressources/output.png

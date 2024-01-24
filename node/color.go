@@ -15,10 +15,10 @@ func NewColor(r, g, b uint32) *Color {
 	}
 }
 
-func (c Color) isStartPoint() bool {
+func (c Color) IsStartPoint() bool {
 	return c.R == 0 && c.G == 255 && c.B == 0
 }
 
-func (c Color) isEndPoint() bool {
+func (c Color) IsEndPoint() bool {
 	return c.R == 255 && c.G == 0 && c.B == 0
 }
