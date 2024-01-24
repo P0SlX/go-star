@@ -57,6 +57,8 @@ func (i Image) readderOptimized(width, height int, nodes *[][]*Node) {
 
 	chunck := height / 10
 
+	rest := height % 10
+
 	maxWorkers := runtime.NumCPU()
 
 	sem := make(chan struct{}, maxWorkers)
@@ -66,16 +68,21 @@ func (i Image) readderOptimized(width, height int, nodes *[][]*Node) {
 		go func(width, start, end int, nodes *[][]*Node) {
 			defer func() { <-sem }()
 			i.readder(width, start, end, nodes)
-		}(width, j*10, (j+1)*10-1, nodes)
+		}(width, j*10, (j+1)*10, nodes)
 	}
 
 	for j := 0; j < maxWorkers; j++ {
 		sem <- struct{}{}
 	}
 
+	if rest > 0 {
+		i.readder(width, chunck*10, chunck*10+rest, nodes)
+	}
+
 }
 
 func (i *Image) findNeighbors(nodes [][]*Node) {
+
 	for y := range nodes {
 		//TODO : Faire un tableau avec make
 		for x := range nodes[y] {
@@ -161,6 +168,7 @@ func (i *Image) Read() [][]*Node {
 	width, height := bounds.Max.X, bounds.Max.Y
 
 	var nodes = make([][]*Node, height)
+	defer i.findNeighbors(nodes)
 
 	//Without go routines
 	if width <= 16 && height <= 16 {
@@ -169,8 +177,6 @@ func (i *Image) Read() [][]*Node {
 		//With go routines
 		i.readderOptimized(width, height, &nodes)
 	}
-
-	i.findNeighbors(nodes)
 
 	return nodes
 
