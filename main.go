@@ -10,7 +10,7 @@ import (
 func main() {
 	var imgPath string
 
-	flag.StringVar(&imgPath, "img", "./ressources/pi.png", "Select path to image")
+	flag.StringVar(&imgPath, "img", "./ressources/first_level.png", "Select path to image")
 	flag.Parse()
 
 	defer utils.Timer("main")()
