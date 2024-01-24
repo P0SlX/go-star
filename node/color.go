@@ -1,4 +1,4 @@
-package Node
+package node
 
 type Color struct {
 	R uint8

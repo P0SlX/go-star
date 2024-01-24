@@ -1,13 +1,12 @@
-package Node
+package node
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io"
 	"os"
-	"sync"
+	"runtime"
 )
 
 type Node struct {
@@ -23,6 +22,28 @@ func NewNode(x, y int, color *Color) *Node {
 		y,
 		color,
 	}
+}
+
+func loopOverImagesOptimized(img image.Image, width, start, end int, nodes *[][]*Node) {
+
+	chunck := height / 10
+
+	maxWorkers := runtime.NumCPU()
+
+	sem := make(chan struct{}, maxWorkers)
+
+	for i := 0; i < chunck; i++ {
+		sem <- struct{}{}
+		go func(img image.Image, width, start, end int, nodes *[][]*Node) {
+			defer func() { <-sem }()
+			loopOverImages(img, width, start, end, nodes)
+		}(img, width, i*10, (i+1)*10-1, nodes)
+	}
+
+	for i := 0; i < maxWorkers; i++ {
+		sem <- struct{}{}
+	}
+
 }
 
 func loopOverImages(img image.Image, width, start, end int, nodes *[][]*Node) {
@@ -64,24 +85,11 @@ func GetNodes(file io.Reader) ([][]*Node, error) {
 	//Without go routines
 	if width <= 16 && height <= 16 {
 		loopOverImages(img, width, 0, height, &nodes)
-
 		return nodes, nil
 	}
 
 	//With go routines
-	//TODO : Trouver un moyen de ne pas hardcoder le nombre de go routines, plutôt proportionnel à la taille de l'image
-	chunck := height / 10
-	wg := sync.WaitGroup{}
-	wg.Add(chunck)
-
-	for i := 0; i < chunck; i++ {
-		go func(img image.Image, width, start, end int, nodes *[][]*Node) {
-			defer wg.Done()
-			loopOverImages(img, width, start, end, nodes)
-		}(img, width, i*10, (i+1)*10-1, &nodes)
-	}
-
-	wg.Wait()
+	loopOverImagesOptimized(img, width, 0, height, &nodes)
 
 	return nodes, nil
 }
@@ -134,23 +142,18 @@ func nodeToImage(nodes [][]*Node) image.Image {
 	return img
 }
 
-func SaveToFile(nodes [][]*Node, filename string) {
+func SaveToFile(nodes [][]*Node, filename string) error {
 	img := nodeToImage(nodes)
 
-	out, saveErr := os.Create(filename)
-	if saveErr != nil {
-		fmt.Println("Impossible de créer le fichier de sortie")
-		os.Exit(1)
-	}
-	defer func(out *os.File) {
-		closeErr := out.Close()
-		if closeErr != nil {
+	out, err := os.Create(filename)
 
-		}
-	}(out)
-
-	encodeErr := png.Encode(out, img)
-	if encodeErr != nil {
-		return
+	if err != nil {
+		return err
 	}
+
+	defer out.Close()
+
+	err = png.Encode(out, img)
+
+	return err
 }

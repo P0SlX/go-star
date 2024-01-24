@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/P0SLX/go-star/Node"
-	"image"
-	"image/png"
-	"os"
+	"github.com/P0SLX/go-star/image"
+	"github.com/P0SLX/go-star/node"
+	"github.com/P0SLX/go-star/utils"
+	"log"
 )
 
 func main() {
@@ -16,34 +16,23 @@ func main() {
 	flag.StringVar(&imgPath, "img", "./ressources/first_level.png", "Select path to image")
 	flag.Parse()
 
-	//defer Timer("main")()
-	image.RegisterFormat("png", "png", png.Decode, png.DecodeConfig)
-	file, err := os.Open(imgPath)
+	defer utils.Timer("main")()
+
+	data, err := image.NewImage(imgPath)
+
+	nodes, err := node.GetNodes(file)
 
 	if err != nil {
-		fmt.Println("Image introuvable...")
-		os.Exit(1)
+		log.Fatalf("Error during image decoding : %s\n", err.Error())
 	}
 
-	//Pas obligé, juste le defer de file.Close devrait suffire
-	defer func(file *os.File) {
-		closeErr := file.Close()
-		if closeErr != nil {
-			fmt.Println("Impossible de fermer le fichier")
-			os.Exit(1)
-		}
-	}(file)
-
-	nodes, err := Node.GetNodes(file)
-
-	if err != nil {
-		fmt.Println("Impossible de décoder l'image")
-		os.Exit(1)
-	}
-
-	start, end := Node.GetStartAndEnd(nodes)
+	start, end := node.GetStartAndEnd(nodes)
 
 	fmt.Printf("Start %#v, End %#v\n", start, end)
 
-	Node.SaveToFile(nodes, "./output.png")
+	err = node.SaveToFile(nodes, "./output.png")
+
+	if err != nil {
+		log.Fatalf("Error during image saving : %s\n", err.Error())
+	}
 }
