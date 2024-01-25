@@ -25,7 +25,7 @@ type Image struct {
 	Width  int
 	Height int
 
-	Nodes [][]*Node
+	Nodes Nodes
 }
 
 // NewImage Crée une nouvelle instance de Image
@@ -175,7 +175,7 @@ func (i *Image) Read() [][]*Node {
 	defer i.findNeighbors()
 
 	//Without go routines
-	if i.Width <= MIN_SIZE && i.Height <= MIN_SIZE {
+	if (i.Width <= MIN_SIZE && i.Height <= MIN_SIZE) || (i.Width != i.Height) {
 		i.Reader(0, i.Height)
 	} else {
 		//With go routines
@@ -191,10 +191,10 @@ func (i Image) Save(filename string) error {
 
 	var img image.Image
 
-	if i.Width <= MIN_SIZE && i.Height <= MIN_SIZE {
-		img = utils.NodeToImage(i.Nodes)
+	if (i.Width <= MIN_SIZE && i.Height <= MIN_SIZE) || (i.Width != i.Height) {
+		img = i.Nodes.ToImage()
 	} else {
-		img = utils.NodeToImageOptimize(i.Nodes)
+		img = i.Nodes.ToImageOptimized()
 	}
 
 	out, err := os.Create("./ressources/" + filename)

@@ -2,9 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"github.com/P0SLX/go-star/node"
-	"image"
-	"image/color"
 	"runtime"
 	"time"
 )
@@ -38,68 +35,4 @@ func FindBestChunck(height int) (chunck int, rest int, resolution int) {
 
 	return chunck, rest, resolution
 
-}
-
-func NodeToImageOptimize(nodes [][]*node.Node) image.Image {
-	width, height := len(nodes), len(nodes[0])
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-
-	chunk, rest, factor := FindBestChunck(height)
-
-	maxWorkers := runtime.NumCPU()
-
-	sem := make(chan struct{}, maxWorkers)
-
-	for j := 0; j < chunk; j++ {
-		sem <- struct{}{}
-		go func(width, start, end int, nodes [][]*node.Node) {
-			defer func() { <-sem }()
-			for y := start; y < end; y++ {
-				for x := 0; x < width; x++ {
-					img.Set(y, x, color.RGBA{
-						R: nodes[x][y].Color.R,
-						G: nodes[x][y].Color.G,
-						B: nodes[x][y].Color.B,
-						A: 255,
-					})
-				}
-			}
-
-		}(width, j*factor, (j+1)*factor, nodes)
-	}
-
-	for j := 0; j < maxWorkers; j++ {
-		sem <- struct{}{}
-	}
-
-	if rest > 0 {
-		for i := chunk * factor; i < chunk*factor+rest; i++ {
-			for k := range nodes[i] {
-				img.Set(k, i, color.RGBA{
-					R: nodes[i][k].Color.R,
-					G: nodes[i][k].Color.G,
-					B: nodes[i][k].Color.B,
-					A: 255,
-				})
-			}
-		}
-	}
-
-	return img
-}
-
-func NodeToImage(nodes [][]*node.Node) image.Image {
-	width, height := len(nodes), len(nodes[0])
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	for i := range nodes {
-		for j := range nodes[i] {
-			img.Set(j, i, color.RGBA{
-				R: nodes[i][j].Color.R,
-				G: nodes[i][j].Color.G,
-				B: nodes[i][j].Color.B,
-				A: 255,
-			})
-		}
-	}
-	return img
 }
