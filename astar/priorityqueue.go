@@ -1,8 +1,18 @@
 package astar
 
-import "github.com/P0SLX/go-star/node"
+import (
+	"container/heap"
+	"github.com/P0SLX/go-star/node"
+	"sort"
+)
 
 type PriorityQueue []*node.Node
+
+// Check PriorityQueue implements sort.Interface
+var _ sort.Interface = (*PriorityQueue)(nil)
+
+// Check PriorityQueue implements heap.Interface
+var _ heap.Interface = (*PriorityQueue)(nil)
 
 func (pq PriorityQueue) Len() int { return len(pq) }
 
