@@ -23,7 +23,7 @@ func BenchmarkSaveMediumImage(b *testing.B) {
 }
 
 func BenchmarkSaveLargeImage(b *testing.B) {
-	img, _ := benchmarks.InitBenchmark("../../ressources/large.png")
+	img, _ := benchmarks.InitBenchmark("../../ressources/xxl.png")
 
 	for n := 0; n < b.N; n++ {
 		img.Nodes.ToImage()
@@ -47,7 +47,7 @@ func BenchmarkSaveMediumImageOptimize(b *testing.B) {
 }
 
 func BenchmarkSaveLargeImageOptimize(b *testing.B) {
-	img, _ := benchmarks.InitBenchmark("../../ressources/large.png")
+	img, _ := benchmarks.InitBenchmark("../../ressources/xxl.png")
 
 	for n := 0; n < b.N; n++ {
 		img.Nodes.ToImageOptimized()

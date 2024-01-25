@@ -1,5 +1,7 @@
 package node
 
+const FACTOR = 257
+
 type Color struct {
 	R uint8
 	G uint8
@@ -9,9 +11,9 @@ type Color struct {
 // NewColor return a new color, divide by 257 to have value between 0 and 255
 func NewColor(r, g, b uint32) *Color {
 	return &Color{
-		uint8(r / 257),
-		uint8(g / 257),
-		uint8(b / 257),
+		uint8(r / FACTOR),
+		uint8(g / FACTOR),
+		uint8(b / FACTOR),
 	}
 }
 

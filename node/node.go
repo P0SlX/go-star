@@ -8,9 +8,7 @@ import (
 	"runtime"
 )
 
-var (
-	ALPHA uint8 = 255
-)
+const ALPHA uint8 = 255
 
 type Node struct {
 	X int

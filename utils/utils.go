@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fmt"
+	"log"
 	"runtime"
 	"time"
 )
@@ -14,7 +14,7 @@ import (
 func Timer(name string) func() {
 	start := time.Now()
 	return func() {
-		fmt.Printf("%s() %v\n", name, time.Since(start))
+		log.Printf("%s() %v\n", name, time.Since(start))
 	}
 }
 

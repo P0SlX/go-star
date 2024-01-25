@@ -20,7 +20,7 @@ func reconstructPath(start, end *node.Node) []*node.Node {
 	return path
 }
 
-// ColorPath Colorie le chemin trouvé en violet
+// ColorPath Colorie le chemin trouvé en violet.
 func ColorPath(nodes []*node.Node) {
 	for _, v := range nodes {
 		v.Color.R = 255

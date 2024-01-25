@@ -14,7 +14,7 @@ var (
 )
 
 type Image struct {
-	File *os.File
+	*os.File
 
 	image.Image
 
