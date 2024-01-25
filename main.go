@@ -31,7 +31,7 @@ func main() {
 		log.Fatalf("Error during image decoding : %s\n", err.Error())
 	}
 
-	_ = img.Read()
+	img.Read()
 
 	start, end := img.FindStartAndEndNode()
 	path := astar.AStar(start, end)
