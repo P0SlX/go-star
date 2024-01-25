@@ -113,22 +113,22 @@ func (i *Image) findNeighbors() {
 		for x := range i.Nodes[y] {
 			// Haut
 			if y > 0 {
-				i.Nodes[y][x].Neighbors[0] = i.Nodes[y-1][x]
+				i.Nodes[y][x].Neighbors = append(i.Nodes[y][x].Neighbors, i.Nodes[y-1][x])
 			}
 
 			// Bas
 			if y < len(i.Nodes)-1 {
-				i.Nodes[y][x].Neighbors[1] = i.Nodes[y+1][x]
+				i.Nodes[y][x].Neighbors = append(i.Nodes[y][x].Neighbors, i.Nodes[y+1][x])
 			}
 
 			// Gauche
 			if x > 0 {
-				i.Nodes[y][x].Neighbors[2] = i.Nodes[y][x-1]
+				i.Nodes[y][x].Neighbors = append(i.Nodes[y][x].Neighbors, i.Nodes[y][x-1])
 			}
 
 			// Droite
 			if x < len(i.Nodes[y])-1 {
-				i.Nodes[y][x].Neighbors[3] = i.Nodes[y][x+1]
+				i.Nodes[y][x].Neighbors = append(i.Nodes[y][x].Neighbors, i.Nodes[y][x+1])
 			}
 		}
 	}

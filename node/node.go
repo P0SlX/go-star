@@ -28,11 +28,10 @@ type Node struct {
 
 func NewNode(x, y int, color *Color) *Node {
 	return &Node{
-		X:         x,
-		Y:         y,
-		Color:     color,
-		IsWall:    color.R == 0 && color.G == 0 && color.B == 0,
-		Neighbors: make([]*Node, 4),
+		X:      x,
+		Y:      y,
+		Color:  color,
+		IsWall: color.R == 0 && color.G == 0 && color.B == 0,
 	}
 }
 

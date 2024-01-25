@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/P0SLX/go-star/astar"
 	"github.com/P0SLX/go-star/image"
 	"github.com/P0SLX/go-star/utils"
 	"log"
@@ -23,11 +24,9 @@ func main() {
 
 	_ = img.Read()
 
-	/*
-		start, end := img.FindStartAndEndNode()
-		path := astar.astar(start, end)
-		astar.ColorPath(path)
-	*/
+	start, end := img.FindStartAndEndNode()
+	path := astar.AStar(start, end)
+	astar.ColorPath(path)
 
 	err = img.Save("output.png")
 
