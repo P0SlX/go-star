@@ -3,7 +3,6 @@ package astar
 import (
 	"container/heap"
 	"github.com/P0SLX/go-star/node"
-	"github.com/P0SLX/go-star/utils"
 )
 
 func reconstructPath(start, end *node.Node) []*node.Node {
@@ -31,8 +30,8 @@ func ColorPath(nodes []*node.Node) {
 
 // AStar Algorithme A* unidirectionnel
 func AStar(start, end *node.Node) []*node.Node {
-	defer utils.Timer("astar")()
-	openSet := &PriorityQueue{}
+	/*	defer utils.Timer("astar")()
+	 */openSet := &PriorityQueue{}
 	closedSet := make(map[*node.Node]bool)
 	heap.Init(openSet)
 	heap.Push(openSet, start)
@@ -68,8 +67,8 @@ func AStar(start, end *node.Node) []*node.Node {
 
 // AStarBiDirectional Algorithme A* bidirectionnel (non fonctionnel)
 func AStarBiDirectional(start, end *node.Node) []*node.Node {
-	defer utils.Timer("astar")()
-
+	/*	defer utils.Timer("astar")()
+	 */
 	// Initialisation des files de priorité pour les deux directions
 	openSetStart, openSetEnd := &PriorityQueue{}, &PriorityQueue{}
 	closedSetStart, closedSetEnd := make(map[*node.Node]bool), make(map[*node.Node]bool)

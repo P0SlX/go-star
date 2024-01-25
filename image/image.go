@@ -9,9 +9,7 @@ import (
 	"runtime"
 )
 
-var (
-	MIN_SIZE = 32
-)
+const MIN_SIZE = 32
 
 type Image struct {
 	*os.File
@@ -141,8 +139,7 @@ func (i *Image) findNeighbors() {
 // On boucle sur chaque node, et on renvoie le pointeur
 // du premier pixel vert et du premier pixel rouge
 func (i Image) FindStartAndEndNode() (*Node, *Node) {
-	var start *Node
-	var end *Node
+	var start, end *Node
 
 	for y := range i.Nodes {
 		for x := range i.Nodes[y] {
