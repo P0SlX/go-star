@@ -29,6 +29,7 @@ func ColorPath(nodes []*node.Node) {
 	}
 }
 
+// AStar Algorithme A* unidirectionnel
 func AStar(start, end *node.Node) []*node.Node {
 	defer utils.Timer("astar")()
 	openSet := &PriorityQueue{}
@@ -50,8 +51,9 @@ func AStar(start, end *node.Node) []*node.Node {
 				continue
 			}
 
-			if !neighbor.Already {
-				neighbor.G = currentNode.G + 1
+			tmpG := currentNode.G + 1
+			if !neighbor.Already || neighbor.G > tmpG {
+				neighbor.G = tmpG
 				neighbor.H = neighbor.Heuristic(end)
 				neighbor.F = neighbor.G + neighbor.H
 				neighbor.Parent = currentNode
