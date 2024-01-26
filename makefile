@@ -4,7 +4,7 @@ OUTPUT_FILE=application
 run:
 	go run $(MAIN_FILE) -img=$(img)
 
-run-build:
+run-build: build
 	./dist/$(OUTPUT_FILE) -img=$(img)
 
 clean-cache:
@@ -16,4 +16,5 @@ build: clean-cache
 time: build
 	time ./dist/$(OUTPUT_FILE)
 
-build-and-run: build run-build
+benchmark:
+	go test -bench=. benchmarks
